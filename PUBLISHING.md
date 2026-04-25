@@ -170,18 +170,14 @@ This ensures you're listed as owner in the registry.
 
 ## tile.json Reference
 
-Your `tile.json` should look like:
+Your optimized `tile.json` will look like:
 
 ```json
 {
-  "name": "planning-execution-harness",
-  "version": "1.0.0",
-  "summary": "Language-agnostic architecture for planning→execution workflows",
+  "name": "benpiper-workspace/planning-execution-harness",
+  "version": "0.2.0",
   "private": false,
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-org/planning-execution-harness"
-  },
+  "summary": "Use when you need to architect a multi-language, language-agnostic system...",
   "skills": {
     "planning-execution-harness": {
       "path": "SKILL.md"
@@ -190,12 +186,12 @@ Your `tile.json` should look like:
 }
 ```
 
-Key fields:
-- `name` — Unique identifier (lowercase, hyphens)
-- `version` — SemVer (1.0.0, 1.0.1, etc.)
-- `summary` — One-liner for registry display
-- `repository` — Link to GitHub repo
+Key fields (auto-optimized by Tessl):
+- `name` — Workspace-qualified identifier (tessl adds your workspace)
+- `version` — SemVer (auto-updated on publish)
+- `summary` — From SKILL.md frontmatter description
 - `private` — false to publish publicly
+- `skills` — Path to SKILL.md file
 
 ## SKILL.md Frontmatter
 

@@ -1,10 +1,13 @@
 # Planning-Execution Harness
 
+**Tessl Skill**: [`benpiper-workspace/planning-execution-harness`](https://tessl.io/registry/skills/github/benpiper/planning-execution-harness)
+
 A language-agnostic architecture for building multi-service agent systems that decompose high-level planning into structured, gated, recoverable execution.
 
 This Tessl skill provides both:
-- **SKILL.md** — The architecture pattern and design guide
-- **Complete reference implementations** — Python, Rust, Node.js services
+- **SKILL.md** — The architecture pattern and design guide (Tessl-registered)
+- **Complete reference implementations** — Python, Rust, Node.js services with JSON-RPC contracts
+- **Schemas & Contracts** — JSON Schema definitions and service I/O specifications
 
 ## Quick Start
 
@@ -163,8 +166,11 @@ All services use **JSON-RPC over stdin/stdout**:
 ```
 planning-execution-harness/
 ├── SKILL.md                          # The main skill (architecture guide)
-├── tile.json                         # Tessl package manifest
+├── tile.json                         # Tessl package manifest (auto-optimized)
 ├── README.md                         # This file
+├── PUBLISHING.md                     # Publishing & claiming guide
+├── .github/workflows/
+│   └── tessl-publish.yml            # Auto-publish to Tessl on push
 ├── schemas/
 │   ├── task-packet.schema.json
 │   ├── bootstrap-plan.schema.json
