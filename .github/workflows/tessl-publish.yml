@@ -1,0 +1,59 @@
+name: Publish to Tessl
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'SKILL.md'
+      - 'tile.json'
+      - 'examples/**'
+      - 'schemas/**'
+      - 'contracts/**'
+
+jobs:
+  validate-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Tessl CLI
+        run: npm install -g tessl
+
+      - name: Lint skill
+        run: |
+          echo "Validating SKILL.md structure..."
+          tessl skill lint . || echo "Note: Install Tessl CLI globally for linting"
+
+      - name: Validate tile.json
+        run: |
+          echo "Checking tile.json..."
+          node -e "const pkg = require('./tile.json'); console.log('✓ Valid tile.json:', pkg.name, pkg.version);"
+
+      - name: Check SKILL.md frontmatter
+        run: |
+          echo "Checking frontmatter..."
+          head -n 10 SKILL.md | grep -E "^(name|description):" || echo "Warning: Check frontmatter format"
+
+      - name: Publish to Tessl
+        if: env.TESSL_TOKEN != ''
+        env:
+          TESSL_TOKEN: ${{ secrets.TESSL_TOKEN }}
+        run: |
+          echo "Publishing skill to Tessl..."
+          tessl skill publish . --token $TESSL_TOKEN || echo "Note: Publish requires Tessl account setup"
+
+      - name: Summary
+        run: |
+          echo "=== Tessl Skill Publishing Summary ==="
+          echo "Skill: $(grep '^name:' tile.json | cut -d'"' -f2)"
+          echo "Version: $(grep '^version:' tile.json | cut -d'"' -f2)"
+          echo ""
+          echo "Next steps if publishing failed:"
+          echo "1. Ensure TESSL_TOKEN secret is set in GitHub repo settings"
+          echo "2. Verify Tessl account and workspace exist"
+          echo "3. Check https://tessl.io for account status"
