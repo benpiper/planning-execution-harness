@@ -1,0 +1,11 @@
+{
+  "name": "planning-execution-harness",
+  "version": "1.0.0",
+  "summary": "Multi-language architecture for decomposing high-level planning into low-level execution with gating, recovery, and permission control",
+  "private": false,
+  "skills": {
+    "planning-execution-harness": {
+      "path": "SKILL.md"
+    }
+  }
+}

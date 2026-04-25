@@ -1,0 +1,53 @@
+service: planning-orchestrator
+version: "1.0"
+description: Decomposes high-level objectives into structured TaskPackets
+
+input_messages:
+  decompose_request:
+    description: Break down an objective into actionable tasks
+    schema:
+      type: object
+      required: [objective]
+      properties:
+        objective:
+          type: string
+          description: High-level goal to decompose
+        context:
+          type: object
+          description: Optional project context (git status, workspace state, etc.)
+    response_schema:
+      type: array
+      items:
+        $ref: "../schemas/task-packet.schema.json"
+
+  refine_request:
+    description: Refine existing plan based on feedback
+    schema:
+      type: object
+      required: [packets, feedback]
+      properties:
+        packets:
+          type: array
+          items:
+            $ref: "../schemas/task-packet.schema.json"
+        feedback:
+          type: string
+          description: User feedback on the plan
+    response_schema:
+      type: array
+      items:
+        $ref: "../schemas/task-packet.schema.json"
+
+output_messages:
+  plan_created:
+    description: Plan successfully generated
+    schema:
+      type: object
+      required: [plan_id, packets]
+      properties:
+        plan_id:
+          type: string
+        packets:
+          type: array
+          items:
+            $ref: "../schemas/task-packet.schema.json"

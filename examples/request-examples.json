@@ -1,0 +1,101 @@
+{
+  "planning_decompose": {
+    "id": "req-001",
+    "method": "decompose",
+    "params": {
+      "objective": "add dark mode to dashboard",
+      "context": {
+        "git_status": "on main branch, no uncommitted changes",
+        "workspace": "~/projects/dashboard"
+      }
+    }
+  },
+
+  "planning_refine": {
+    "id": "req-002",
+    "method": "refine",
+    "params": {
+      "packets": [
+        {
+          "objective": "Create theme context provider",
+          "scope": "module",
+          "scope_path": "src/theme",
+          "acceptance_tests": ["npm test -- theme"]
+        },
+        {
+          "objective": "Add theme toggle to UI",
+          "scope": "module",
+          "scope_path": "src/components",
+          "acceptance_tests": ["npm test -- components"]
+        }
+      ],
+      "feedback": "Please prioritize the toggle UI over the context provider"
+    }
+  },
+
+  "bootstrap_execute_system_prompt": {
+    "id": "req-003",
+    "method": "execute_phase",
+    "params": {
+      "phase": "system_prompt_fastpath",
+      "context": {
+        "cwd": "/home/user/projects/dashboard",
+        "instruction_files": [".claude.json", "CLAUDE.md"]
+      }
+    }
+  },
+
+  "bootstrap_execute_mcp": {
+    "id": "req-004",
+    "method": "execute_phase",
+    "params": {
+      "phase": "mcp_fastpath",
+      "context": {
+        "cwd": "/home/user/projects/dashboard"
+      }
+    }
+  },
+
+  "worker_spawn": {
+    "id": "req-005",
+    "method": "spawn_worker",
+    "params": {
+      "task_packet": {
+        "objective": "Create theme provider component with hook and context",
+        "scope": "module",
+        "scope_path": "src/theme",
+        "acceptance_tests": [
+          "npm test -- theme",
+          "npm run build -- no errors"
+        ],
+        "commit_policy": "single verified commit",
+        "escalation_policy": "stop on destructive ambiguity"
+      }
+    }
+  },
+
+  "worker_check_trust": {
+    "id": "req-006",
+    "method": "check_trust",
+    "params": {
+      "worker_id": "worker_1234_1704067200"
+    }
+  },
+
+  "worker_mark_trusted": {
+    "id": "req-007",
+    "method": "mark_trusted",
+    "params": {
+      "worker_id": "worker_1234_1704067200",
+      "approval_source": "human_approval"
+    }
+  },
+
+  "worker_get_worker": {
+    "id": "req-008",
+    "method": "get_worker",
+    "params": {
+      "worker_id": "worker_1234_1704067200"
+    }
+  }
+}

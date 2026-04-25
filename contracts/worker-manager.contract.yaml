@@ -1,0 +1,58 @@
+service: worker-manager
+version: "1.0"
+description: Manages worker lifecycle, trust gates, and readiness checks
+
+input_messages:
+  spawn_worker:
+    description: Spawn a new worker for a task
+    schema:
+      type: object
+      required: [task_packet]
+      properties:
+        task_packet:
+          $ref: "../schemas/task-packet.schema.json"
+    response_schema:
+      type: object
+      required: [worker_id]
+      properties:
+        worker_id:
+          type: string
+
+  check_trust:
+    description: Check if worker requires trust gate approval
+    schema:
+      type: object
+      required: [worker_id]
+      properties:
+        worker_id:
+          type: string
+    response_schema:
+      type: object
+      required: [requires_approval]
+      properties:
+        requires_approval:
+          type: boolean
+
+  mark_trusted:
+    description: Mark worker as trusted and ready for prompt
+    schema:
+      type: object
+      required: [worker_id]
+      properties:
+        worker_id:
+          type: string
+        approval_source:
+          type: string
+          description: "human_approval, auto_allowlist, etc."
+    response_schema:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+
+output_messages:
+  worker_event:
+    description: Worker state transition event
+    schema:
+      $ref: "../schemas/worker-event.schema.json"

@@ -1,0 +1,62 @@
+service: bootstrap-executor
+version: "1.0"
+description: Executes ordered bootstrap phases with idempotent preparation
+
+input_messages:
+  execute_phase:
+    description: Execute a single bootstrap phase
+    schema:
+      type: object
+      required: [phase]
+      properties:
+        phase:
+          enum:
+            - cli_entry
+            - system_prompt_fastpath
+            - mcp_fastpath
+            - daemon_worker_fastpath
+            - main_runtime
+        context:
+          type: object
+          description: Working directory, env vars, config paths
+    response_schema:
+      type: object
+      required: [phase, success]
+      properties:
+        phase:
+          type: string
+        success:
+          type: boolean
+        diagnostics:
+          type: string
+        artifacts:
+          type: object
+          additionalProperties:
+            type: string
+
+output_messages:
+  phase_started:
+    description: Bootstrap phase execution started
+    schema:
+      type: object
+      required: [phase, timestamp]
+      properties:
+        phase:
+          type: string
+        timestamp:
+          type: integer
+
+  phase_completed:
+    description: Bootstrap phase execution completed
+    schema:
+      type: object
+      required: [phase, success, timestamp]
+      properties:
+        phase:
+          type: string
+        success:
+          type: boolean
+        artifacts:
+          type: object
+        timestamp:
+          type: integer
