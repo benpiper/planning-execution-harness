@@ -2,7 +2,7 @@
   "name": "benpiper-workspace/planning-execution-harness",
   "version": "0.2.0",
   "private": false,
-  "summary": "Use when you need to separate planning from execution with structured workflows, gating, and recovery.",
+  "summary": "Break down goals into multiple tasks and coordinate their execution with gates and recovery.",
   "skills": {
     "planning-execution-harness": {
       "path": "SKILL.md"

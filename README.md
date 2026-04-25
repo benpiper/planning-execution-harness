@@ -2,13 +2,14 @@
 
 **Tessl Skill**: [`benpiper-workspace/planning-execution-harness`](https://tessl.io/registry/skills/github/benpiper/planning-execution-harness)
 
-A foundational pattern for any system that needs to separate **planning from execution** with explicit gating, recovery, and observability.
+A foundational pattern for breaking down any goal into multiple coordinated tasks with explicit planning, execution, gating, and recovery.
 
 **Triggered when you need to:**
-- Decompose high-level goals into concrete tasks
-- Add permission gates or approval steps
+- Break a goal into multiple tasks or steps
+- Coordinate execution of those tasks
+- Add approval gates or decision points
 - Implement automatic failure recovery
-- Create structured workflows with explicit state transitions
+- Manage complex multi-step processes
 
 **This Tessl skill provides:**
 - **SKILL.md** — Complete architecture guide (language-agnostic)

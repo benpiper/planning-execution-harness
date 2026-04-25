@@ -1,6 +1,6 @@
 ---
 name: planning-execution-harness
-description: Use when you need to separate planning from execution. Applies to any system that requires: decomposing high-level goals into concrete tasks, gating before execution, automatic failure recovery, or structured workflows with explicit state transitions.
+description: Use when you need to break down a goal into multiple tasks and coordinate their execution. Applies to: decomposing work into steps, adding approval gates, implementing recovery, managing multi-step processes, autonomous task execution.
 ---
 
 # Planning-Execution Harness Architecture
