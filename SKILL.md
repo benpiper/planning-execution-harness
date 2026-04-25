@@ -1,6 +1,6 @@
 ---
 name: planning-execution-harness
-description: Generates a multi-language orchestrator-executor architecture with planning layers, execution modules, trust gates, error recovery handlers, and permission controls connected via JSON message contracts. Use when the user asks to build a system where a planner delegates tasks to executors, needs multi-language orchestration across Python/Rust/Node.js or similar, wants to add approval gates and retry logic to a workflow, or is designing a multi-agent task dispatcher, workflow engine, or command orchestrator with structured failure recovery.
+description: Use when you need to separate planning from execution. Applies to any system that requires: decomposing high-level goals into concrete tasks, gating before execution, automatic failure recovery, or structured workflows with explicit state transitions.
 ---
 
 # Planning-Execution Harness Architecture

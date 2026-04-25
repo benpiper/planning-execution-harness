@@ -2,7 +2,7 @@
   "name": "benpiper-workspace/planning-execution-harness",
   "version": "0.2.0",
   "private": false,
-  "summary": "Use when you need to architect a multi-language, language-agnostic system that separates high-level planning from low-level execution with gating, recovery, and permission control.",
+  "summary": "Use when you need to separate planning from execution with structured workflows, gating, and recovery.",
   "skills": {
     "planning-execution-harness": {
       "path": "SKILL.md"
