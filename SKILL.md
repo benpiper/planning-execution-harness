@@ -1,127 +1,330 @@
 ---
 name: planning-execution-harness
-description: "Use when orchestrating sequential tasks, multi-step automation pipelines, or DAG-style workflows that require dependency tracking, approval gates, checkpoint/resume logic, and rollback on failure. Creates ordered task pipelines with schema-validated stage boundaries, trust-gate enforcement between worker startup and execution, and failure classification mapped to recovery recipes. Applies to: decomposing a goal into dependency-ordered TaskPackets, coordinating JSON-RPC services across a build-and-deploy sequence, enforcing approval gates in CI/CD workflows, implementing structured failure recovery with per-error-type recipes, and automating multi-stage processes with event-log ground truth. Not for single API calls or one-off scripts — use when there are 3+ coordinated steps with task dependencies or sequential execution order."
+description: "Use when orchestrating sequential tasks, multi-step automation pipelines, or DAG-style workflows that require dependency tracking, approval gates, checkpoint/resume logic, and rollback on failure. Applies to: decomposing a goal into dependency-ordered tasks, coordinating execution with explicit state transitions, enforcing approval gates between planning and execution, implementing structured failure recovery with per-error-type recipes, and automating multi-stage processes with event-log ground truth. Not for single API calls or one-off scripts — use when there are 3+ coordinated steps with task dependencies or sequential execution order."
 ---
 
-# Planning-Execution Harness Architecture
+# Planning-Execution Harness: A Universal LLM Agent Pattern
 
-A seven-stage pattern for agent systems: **Task Specification → Bootstrap Planning → Worker Startup → Permission Checks → Hook Interception → Execution Loop → Failure Recovery**. All stages communicate via JSON message contracts — no language-specific serialization.
+A design pattern for structuring how any LLM agent decomposes high-level goals into concrete executable tasks, with explicit gates, recovery mechanisms, and observability.
 
-## Stage Overview
+## Core Problem
+
+Most LLM agents work like this:
 
 ```
-Task Specification     → validate against task-packet.schema.json
-Bootstrap Planning     → validate phase artifacts produced
-Worker Startup         → emit trust_required → GATE (wait for trust_resolved)
-                       → worker emits ready_for_prompt
-Permission Checks      → validate authorization before destructive ops
-Hook Interception      → planning→execution boundary
-Execution Loop         → tool calls
-Failure Recovery       → classify error type → apply recovery recipe
+User Goal → LLM Thinks & Acts → Done (or fails)
 ```
 
-## Core Schemas
+This works for simple tasks but breaks down at scale because:
+- ❌ No explicit boundary between "planning" and "doing"
+- ❌ No gates before destructive operations
+- ❌ No structured recovery when things fail
+- ❌ No clear task dependencies or execution order
+- ❌ No way to track what happened (no event log)
 
-**task-packet.schema.json** — create this file with the following definition:
+## The Pattern
 
-```json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "TaskPacket",
-  "type": "object",
-  "required": ["objective", "scope", "acceptance_tests"],
-  "properties": {
-    "objective": { "type": "string" },
-    "scope": { "type": "string", "enum": ["workspace", "module", "single_file", "custom"] },
-    "acceptance_tests": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-    "scope_path": { "type": "string" },
-    "commit_policy": { "type": "string", "enum": ["auto", "manual", "none"] },
-    "escalation_policy": { "type": "string", "enum": ["fail", "pause", "skip"] }
-  }
-}
+Insert explicit **stages** between goal and execution:
+
+```
+High-Level Goal
+    ↓
+[PLANNING STAGE]
+    • Decompose into concrete tasks
+    • Identify dependencies
+    • Validate feasibility
+    ↓
+[GATE STAGE]
+    • Human/system approval
+    • Trust resolution
+    • Risk assessment
+    ↓
+[EXECUTION STAGE]
+    • Execute tasks in order
+    • Handle failures per task
+    • Log everything
+    ↓
+Outcome
 ```
 
-**worker-event.schema.json** — required: `event_id`, `kind` (enum: spawning/trust_required/trust_resolved/ready_for_prompt/running/finished/failed), `worker_id`, `timestamp`.
+## Why This Matters
 
-**Service contracts** (YAML) — define `input_messages` and `output_messages` with `$ref` to schema files for: `planning-orchestrator`, `bootstrap-executor`, `worker-manager`, `permission-enforcer`, `recovery-executor`.
+### 1. Prevents Mistakes
 
-See `SCHEMAS.md` for remaining schema definitions and `PATTERNS.md` for failure recovery recipes.
+Without a gate, an LLM might:
+- Delete production data (planning said "no", execution didn't check)
+- Run 100 parallel jobs instead of sequentially (dependency not explicit)
+- Retry forever on unrecoverable errors (no classification)
 
-## Minimal End-to-End Example (Python orchestrator)
+With explicit stages:
+- "Planning" decides what SHOULD happen
+- "Gate" checks if it's safe
+- "Execution" only does what was approved
+- "Recovery" knows HOW to handle specific failures
 
-### Minimal service implementation (planning.py)
+### 2. Handles Complexity
 
-```python
-import sys, json
+A single "think and act" loop breaks when:
+- 5+ steps are needed
+- Steps depend on each other
+- Some steps need human approval
+- Failures need different recovery strategies
 
-def decompose(objective, context):
-    # Replace with real decomposition logic
-    return [{"objective": objective, "scope": "workspace", "acceptance_tests": ["pytest"]}]
+Explicit stages handle all of these because each stage has a clear responsibility.
 
-for line in sys.stdin:
-    req = json.loads(line)
-    result = decompose(**req["params"]) if req["method"] == "decompose" else None
-    sys.stdout.write(json.dumps({"id": req["id"], "result": result}) + "\n")
-    sys.stdout.flush()
-```
+### 3. Makes Behavior Observable
 
-All other services (bootstrap, worker.js) follow the same stdin/stdout JSON-RPC loop — read a line, dispatch on `method`, write a response line.
+No stage should surprise you. You can see:
+- What the LLM decided to do (planning output)
+- What was approved (gate decision)
+- What actually happened (execution log)
+- How failures were recovered (recovery recipe used)
 
-### Orchestrator
+## The Seven Stages
 
-```python
-import subprocess, json
+### Stage 1: Task Specification (Planning)
 
-class Orchestrator:
-    def __init__(self):
-        self.planning = self._start(["python3", "planning.py"])
-        self.bootstrap = self._start(["./bootstrap"])
-        self.worker = self._start(["node", "worker.js"])
-        self.req_id = 0
+**Input:** A goal  
+**Output:** A list of concrete tasks with dependencies
 
-    def _start(self, cmd):
-        return subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
+The LLM decomposes "optimize my resume" into:
+1. Analyze current resume
+2. Research target roles
+3. Identify skill gaps
+4. Rewrite sections (depends on 1, 2, 3)
+5. Add keywords (depends on 4)
+6. Final review (depends on 5)
 
-    def call(self, proc, method, params):
-        self.req_id += 1
-        req = {"id": f"req_{self.req_id}", "method": method, "params": params}
-        proc.stdin.write(json.dumps(req) + "\n")
-        resp = json.loads(proc.stdout.readline())
-        if "error" in resp:
-            raise RuntimeError(f"{method} failed: {resp['error']}")
-        return resp["result"]
+Each task should be:
+- Concrete and testable
+- Have acceptance criteria
+- Know its dependencies
+- Specify scope (single file? whole project? across systems?)
 
-    def run(self, objective):
-        # Stage 1: Decompose objective into TaskPackets — validate output against schema
-        packets = self.call(self.planning, "decompose", {"objective": objective, "context": {}})
-        assert all("acceptance_tests" in p for p in packets), "Invalid TaskPacket: missing acceptance_tests"
+### Stage 2: Bootstrap Planning (Preparation)
 
-        # Stage 2: Bootstrap — validate artifacts before proceeding
-        artifacts = self.call(self.bootstrap, "execute_phase", {"phase": "system_prompt_fastpath"})
-        assert artifacts.get("success"), f"Bootstrap phase failed: {artifacts}"
+**Input:** The task specification  
+**Output:** Prepared environment
 
-        # Stage 3: Spawn workers — GATE on trust_required → trust_resolved before continuing
-        for packet in packets:
-            worker_id = self.call(self.worker, "spawn_worker", {"task_packet": packet})
-            # Worker manager must emit trust_resolved before ready_for_prompt
-            status = self.call(self.worker, "get_status", {"worker_id": worker_id})
-            assert status["kind"] == "ready_for_prompt", f"Trust gate not cleared: {status}"
-```
+Before execution starts, set up:
+- Tools are available and initialized
+- Credentials loaded
+- System prompt updated with context
+- Configuration validated
+- Dependencies verified
+
+This is a gate disguised as setup. If bootstrap fails, execution never starts.
+
+### Stage 3: Worker Startup (Trust Gate)
+
+**Input:** Prepared environment  
+**Output:** Ready-to-execute worker
+
+Before the LLM executes anything:
+1. Emit "I'm about to execute" signal
+2. **WAIT** for approval (human or policy)
+3. Only proceed after "trust_resolved" signal
+
+This is the critical gate. It separates "planning" (LLM output) from "doing" (actual changes).
+
+Why? Because plans can be wrong. A human can review and say "no, don't do that" before anything happens.
+
+### Stage 4: Permission Checks (Execution Control)
+
+**Input:** A requested action  
+**Output:** Allow or deny
+
+Before executing each tool call, ask:
+- Is this action allowed in current mode?
+- Does the input match the plan?
+- Should this step be gated further?
+
+Example modes:
+- `planning` — read-only, no side effects
+- `exploration` — test changes, but don't commit
+- `execution` — full access
+
+### Stage 5: Hook Interception (Observability)
+
+**Input:** Tool call request  
+**Output:** Modified request or denial
+
+Between "LLM wants to call a tool" and "tool is executed":
+- Log what's happening
+- Let external systems intervene
+- Collect metrics
+- Validate the request matches the plan
+
+This isn't about blocking — it's about **witnessing** what's happening.
+
+### Stage 6: Execution Loop (Action)
+
+**Input:** Approved tool calls  
+**Output:** Results and state transitions
+
+The LLM:
+- Calls a tool
+- Gets a result
+- Decides what to do next
+- Iterates until done
+
+Each iteration emits events (called, succeeded, failed) to the event log.
+
+### Stage 7: Failure Recovery (Resilience)
+
+**Input:** A failure event  
+**Output:** Recovery action or escalation
+
+When something fails:
+1. Classify the failure type (timeout, permission denied, invalid input, etc.)
+2. Look up the recovery recipe for that type
+3. Execute the recipe (retry, rollback, skip, escalate)
+4. Log the recovery and its outcome
+
+Example recipes:
+- **Network timeout** → retry with exponential backoff
+- **Permission denied** → escalate to human for approval
+- **Invalid input** → regenerate with refined constraints
+- **Rollback needed** → undo changes in reverse order
 
 ## Key Design Principles
 
-1. **Trust gate is mandatory** — never proceed past `trust_required` without `trust_resolved`
-2. **Schema validation at every boundary** — validate inputs and outputs at each stage transition
-3. **Event log = ground truth** — if no event was emitted, the state change didn't happen
-4. **Failure classification first** — map error types to recovery recipes before retrying
-5. **New service pattern**: JSON Schema → YAML contract → stdin/stdout JSON-RPC handler → register in orchestrator
-6. **New failure scenario**: add to `failure-scenario.schema.json` → create recovery recipe → update classifier
+### 1. Planning Happens First, Separate from Execution
 
-## Validation Checklist
+The LLM produces a plan. That plan is validated, reviewed, possibly modified. THEN execution happens.
 
-- [ ] All schemas valid (`npx ajv-cli validate -s schema.json -d data.json`)
-- [ ] Bootstrap phases produce expected artifacts
-- [ ] Trust gate tested: trust_required blocks, trust_resolved unblocks
-- [ ] Recovery recipes handle all defined failure scenarios
-- [ ] Multi-language services exchange messages successfully
-- [ ] Event log captures all state transitions
+Why? Because a perfect plan executed slowly is better than a broken plan executed quickly.
+
+### 2. Gates Are Explicit
+
+"I'm about to do X" → [GATE] → "X approved" → do X
+
+Not implicit or silent. Every gate is a named, loggable event.
+
+### 3. State Changes Are Logged
+
+If no event was emitted, the state change didn't happen. The event log is the source of truth.
+
+This means:
+- External systems can observe what's happening
+- You can replay what happened
+- You can debug failures
+
+### 4. Failures Are Classified, Not Repeated
+
+Don't retry everything. Classify the failure type first:
+- Transient (retry) vs permanent (escalate)
+- User error (ask for clarification) vs system error (fix and retry)
+- Expected (apply recipe) vs unexpected (human judgment)
+
+### 5. Tasks Have Dependencies
+
+Not all tasks can run in parallel. Some depend on others:
+- "Rewrite resume" depends on "identify gaps"
+- "Deploy" depends on "tests pass"
+- "Archive old data" depends on "backup complete"
+
+Make dependencies explicit so the orchestrator can enforce them.
+
+### 6. Every System is Different, But the Pattern is the Same
+
+You might implement this with:
+- HTTP APIs coordinating microservices
+- Message queues triggering workers
+- A single LLM with tools
+- Multiple LLMs coordinating
+- Humans + LLMs hybrid
+
+The pattern doesn't care. What matters is: explicit stages, gates, recovery, and logging.
+
+## When to Use This Pattern
+
+Use this pattern when:
+- ✅ Multiple steps are required (3+)
+- ✅ Steps have dependencies
+- ✅ Approval is needed before execution
+- ✅ Failures need different recovery strategies
+- ✅ You need to observe what happened
+
+Don't use when:
+- ❌ Single, simple action (call one API)
+- ❌ No dependencies between steps
+- ❌ No approval needed
+- ❌ Fire-and-forget is acceptable
+
+## Minimal Example (Conceptual)
+
+A goal: "Optimize my resume for 3 job postings"
+
+**Stage 1: Planning**
+```
+LLM output:
+  Task 1: Analyze each job posting (3 tasks, parallel)
+  Task 2: Identify common skills across all 3 (depends on Task 1)
+  Task 3: Rewrite experience to emphasize those skills (depends on Task 2)
+  Task 4: Add keywords from job postings (depends on Task 2)
+  Task 5: Final review (depends on Task 3, Task 4)
+```
+
+**Stage 2: Bootstrap**
+```
+Set up: text editor, job posting documents, thesaurus tools
+Verify: all inputs are readable, spell-check enabled
+```
+
+**Stage 3: Trust Gate**
+```
+[Gate blocks here]
+Human reviews plan: "Yes, proceed" (or "No, modify Task 3 first")
+```
+
+**Stage 4: Execution**
+```
+Execute Task 1: LLM reads job postings (parallel)
+Execute Task 2: LLM identifies common skills
+Execute Task 3: LLM rewrites resume
+Execute Task 4: LLM adds keywords
+Execute Task 5: LLM does final review
+```
+
+**Stage 5: Recovery**
+```
+If Task 3 fails (no write access):
+  → Classify: permission error
+  → Apply recipe: ask for manual approval, proceed with human input
+```
+
+## Implementation Agnosticism
+
+This pattern works with:
+
+- **Claude + Claw** — Uses tools + session persistence
+- **GPT-4 + Function Calling** — Uses function calls + conversation history
+- **Gemini + Custom Tools** — Uses tool use + state management
+- **Open Source LLM + Ollama** — Uses local execution + event logging
+- **Multi-Agent Orchestration** — Multiple LLMs + coordination layer
+- **Hybrid Human + AI** — Humans at gates, LLM for execution
+
+The core pattern is the same. Only the implementation details change.
+
+## The One Requirement
+
+Whatever you build, ensure:
+- **Events are logged** — proof that things happened
+- **Gates are explicit** — nothing happens without approval
+- **Failures are classified** — each error type has a recipe
+- **Dependencies are tracked** — tasks execute in right order
+- **Recovery is automatic** — known failures don't require human triage
+
+## Next Steps
+
+1. **Identify your use case** — What goal needs planning + execution?
+2. **Define stages for your system** — What does planning look like for you?
+3. **Add a gate** — Where should approval happen?
+4. **Define failure scenarios** — What can go wrong, and how to recover?
+5. **Implement the event log** — Make everything observable
+6. **Test the gate** — Verify human/policy approval actually stops execution
+
+---
+
+This pattern is **universal** because the problem is universal: any complex goal needs planning before execution, gates before risk, and recovery before failure becomes catastrophe.
