@@ -1,6 +1,6 @@
 ---
 name: planning-execution-harness
-description: Use when you need to break down a goal into multiple tasks and coordinate their execution. Applies to: decomposing work into steps, adding approval gates, implementing recovery, managing multi-step processes, autonomous task execution.
+description: "Use when you need to break down a goal into multiple tasks and coordinate their execution. Applies to: decomposing work into steps, adding approval gates, implementing recovery, managing multi-step processes, autonomous task execution."
 ---
 
 # Planning-Execution Harness Architecture
