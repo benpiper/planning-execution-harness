@@ -1,6 +1,6 @@
 ---
 name: planning-execution-harness
-description: "Use when you need to break down a goal into multiple tasks and coordinate their execution. Applies to: decomposing work into steps, adding approval gates, implementing recovery, managing multi-step processes, autonomous task execution."
+description: "Use when orchestrating sequential tasks, multi-step automation pipelines, or DAG-style workflows that require dependency tracking, approval gates, checkpoint/resume logic, and rollback on failure. Creates ordered task pipelines with schema-validated stage boundaries, trust-gate enforcement between worker startup and execution, and failure classification mapped to recovery recipes. Applies to: decomposing a goal into dependency-ordered TaskPackets, coordinating JSON-RPC services across a build-and-deploy sequence, enforcing approval gates in CI/CD workflows, implementing structured failure recovery with per-error-type recipes, and automating multi-stage processes with event-log ground truth. Not for single API calls or one-off scripts — use when there are 3+ coordinated steps with task dependencies or sequential execution order."
 ---
 
 # Planning-Execution Harness Architecture
@@ -10,32 +10,64 @@ A seven-stage pattern for agent systems: **Task Specification → Bootstrap Plan
 ## Stage Overview
 
 ```
-Task Specification (JSON schema)
-    ↓ validate against task-packet.schema.json
-Bootstrap Planning (ordered, idempotent phases)
-    ↓ validate phase artifacts produced
-Worker Startup → emit trust_required event → GATE (wait for trust_resolved)
-    ↓ worker emits ready_for_prompt
-Permission Checks
-    ↓ validate authorization before destructive ops
-Hook Interception (planning→execution boundary)
-    ↓
-Execution Loop (tool calls)
-    ↓ on error: classify failure type
-Failure Recovery (map error type → recovery recipe)
+Task Specification     → validate against task-packet.schema.json
+Bootstrap Planning     → validate phase artifacts produced
+Worker Startup         → emit trust_required → GATE (wait for trust_resolved)
+                       → worker emits ready_for_prompt
+Permission Checks      → validate authorization before destructive ops
+Hook Interception      → planning→execution boundary
+Execution Loop         → tool calls
+Failure Recovery       → classify error type → apply recovery recipe
 ```
 
-## Core Schemas (create as separate files)
+## Core Schemas
 
-**task-packet.schema.json** — required fields: `objective` (string), `scope` (enum: workspace/module/single_file/custom), `acceptance_tests` (array of command strings). Optional: `scope_path`, `commit_policy`, `escalation_policy`.
+**task-packet.schema.json** — create this file with the following definition:
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TaskPacket",
+  "type": "object",
+  "required": ["objective", "scope", "acceptance_tests"],
+  "properties": {
+    "objective": { "type": "string" },
+    "scope": { "type": "string", "enum": ["workspace", "module", "single_file", "custom"] },
+    "acceptance_tests": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "scope_path": { "type": "string" },
+    "commit_policy": { "type": "string", "enum": ["auto", "manual", "none"] },
+    "escalation_policy": { "type": "string", "enum": ["fail", "pause", "skip"] }
+  }
+}
+```
 
 **worker-event.schema.json** — required: `event_id`, `kind` (enum: spawning/trust_required/trust_resolved/ready_for_prompt/running/finished/failed), `worker_id`, `timestamp`.
 
 **Service contracts** (YAML) — define `input_messages` and `output_messages` with `$ref` to schema files for: `planning-orchestrator`, `bootstrap-executor`, `worker-manager`, `permission-enforcer`, `recovery-executor`.
 
-See `SCHEMAS.md` for full schema definitions and `PATTERNS.md` for failure recovery recipes.
+See `SCHEMAS.md` for remaining schema definitions and `PATTERNS.md` for failure recovery recipes.
 
 ## Minimal End-to-End Example (Python orchestrator)
+
+### Minimal service implementation (planning.py)
+
+```python
+import sys, json
+
+def decompose(objective, context):
+    # Replace with real decomposition logic
+    return [{"objective": objective, "scope": "workspace", "acceptance_tests": ["pytest"]}]
+
+for line in sys.stdin:
+    req = json.loads(line)
+    result = decompose(**req["params"]) if req["method"] == "decompose" else None
+    sys.stdout.write(json.dumps({"id": req["id"], "result": result}) + "\n")
+    sys.stdout.flush()
+```
+
+All other services (bootstrap, worker.js) follow the same stdin/stdout JSON-RPC loop — read a line, dispatch on `method`, write a response line.
+
+### Orchestrator
 
 ```python
 import subprocess, json
@@ -76,29 +108,14 @@ class Orchestrator:
             assert status["kind"] == "ready_for_prompt", f"Trust gate not cleared: {status}"
 ```
 
-Each service (planning.py, bootstrap, worker.js) reads JSON-RPC from stdin, writes responses to stdout. See `IMPLEMENTATIONS.md` for Rust and Node.js service implementations.
-
-## Transport Options
-
-| Transport | Usage |
-|-----------|-------|
-| **stdin/stdout** (recommended) | newline-delimited JSON-RPC |
-| **HTTP** | `POST /services/{name}/methods/{method}` with JSON body |
-| **gRPC** | define `.proto` per service contract |
-
 ## Key Design Principles
 
 1. **Trust gate is mandatory** — never proceed past `trust_required` without `trust_resolved`
-2. **Idempotency** — all bootstrap phases must be safe to retry
-3. **Schema validation** — validate inputs and outputs at every stage boundary
-4. **Event log = ground truth** — if no event was emitted, the state change didn't happen
-5. **Failure classification** — map error types to recovery recipes before retrying
-
-## Adding Components
-
-- **New service**: JSON Schema → YAML contract → stdin/stdout JSON-RPC handler → register in orchestrator
-- **New failure scenario**: add to `failure-scenario.schema.json` → create recovery recipe → update classifier
-- **New language**: implement JSON-RPC stdin/stdout loop; no changes to core architecture
+2. **Schema validation at every boundary** — validate inputs and outputs at each stage transition
+3. **Event log = ground truth** — if no event was emitted, the state change didn't happen
+4. **Failure classification first** — map error types to recovery recipes before retrying
+5. **New service pattern**: JSON Schema → YAML contract → stdin/stdout JSON-RPC handler → register in orchestrator
+6. **New failure scenario**: add to `failure-scenario.schema.json` → create recovery recipe → update classifier
 
 ## Validation Checklist
 
