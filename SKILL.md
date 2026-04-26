@@ -13,19 +13,13 @@ When given a goal, follow these stages:
 
 ### 1. PLAN — Decompose into ordered tasks
 
-Break the goal into concrete, testable tasks with dependencies:
+Break the goal into concrete, testable tasks with explicit dependencies (3-7 tasks):
 
 ```
 Task 1: [specific action]
 Task 2: [specific action] (depends on Task 1)
 Task 3: [specific action] (depends on Task 2)
 ```
-
-Requirements:
-- **Concrete** — "Analyze job postings" not "optimize resume"
-- **Testable** — Pass/fail is clear
-- **Ordered** — Dependencies shown explicitly
-- **Right size** — Aim for 3-7 tasks
 
 ### 2. GATE — Present plan for approval
 
@@ -65,23 +59,23 @@ List all completed tasks, failures, and how they were recovered.
 
 **Plan:**
 ```
-Task 1: Check if JWT tokens are being generated
-Task 2: Verify token is in Authorization header
-Task 3: Check if token validation passes
-Task 4: Check if user lookup succeeds
+Task 1: Run: curl -X POST http://localhost:3000/api/token -d '{"user":"test"}'
+Task 2: Check logs: grep "Authorization header" app.log
+Task 3: Run: node -e "console.log(jwt.verify(token, process.env.SECRET))"
+Task 4: Query: SELECT * FROM users WHERE id=123
 ```
 
 **After approval, execute:**
 ```
-[Task 1/4] ✓ Tokens generating correctly
-[Task 2/4] ✓ Token in header
-[Task 3/4] ✗ Validation failed: "Invalid signature"
-  Recovery: Retry with correct signing key
-  [Task 3/4 RETRY] ✓ Validation now passing
-[Task 4/4] ✓ User lookup working
+[Task 1/4] ✓ Tokens generating: {"token":"eyJhb..."}
+[Task 2/4] ✓ Header present in 100% of requests
+[Task 3/4] ✗ jwt.verify failed: "Invalid signature"
+  Recovery: Check SIGNING_KEY env var → wrong value detected
+  [Task 3/4 RETRY] ✓ Validation now passing with correct key
+[Task 4/4] ✓ User lookup: {id:123, name:"Alice"}
 ```
 
-**Outcome:** Found bug in signing key. Fixed.
+**Outcome:** Found: SIGNING_KEY env var was outdated. Updated and tested.
 
 ---
 
