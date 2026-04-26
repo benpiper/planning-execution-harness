@@ -1,6 +1,6 @@
 ---
 name: planning-execution-harness
-description: "Use when orchestrating multi-step processes that require explicit approval before proceeding and retry on failure. Teaches step-by-step planning before action, workflow automation with approval gates, and failure recovery strategies. Creates task dependencies and execution plans. Enforces approval checkpoints that block execution. Retries on transient failures, escalates on permission errors, handles unrecoverable failures gracefully. Applies to: approval-gated workflows, step-by-step pipelines, complex multi-task processes, failure recovery, deployment pipelines, task orchestration."
+description: "Use when you need to ask before executing, don't run without permission, review steps before proceeding, or confirm before executing. An LLM breaks down goals into tasks, presents the plan for approval, then executes only if approved. Enforces a mandatory approval gate that blocks all execution. Separates planning from execution so no action runs without prior sign-off. Classifies failures by type and applies type-specific recovery strategies. Produces a timestamped event log of every state change. Applies to: step-by-step workflows with approval, irreversible or risky operations, human-in-the-loop execution, agentic pipelines with intelligent failure recovery."
 ---
 
 # Planning-Execution Pattern for LLMs
@@ -23,7 +23,7 @@ Task 3: [specific action] (depends on Task 2)
 
 ### 2. GATE — Present plan for approval
 
-Show the task list. Wait for user approval before proceeding. User may modify or reject.
+Show the task list. Mark any irreversible or destructive steps as ⚠ RISKY. Wait for explicit approval before proceeding. User may modify or reject.
 
 Do not execute until explicitly approved.
 
@@ -40,16 +40,25 @@ When a task fails, classify it first, then apply appropriate recovery:
 
 | Failure Type | Detection | Recovery | Max Attempts |
 |---|---|---|---|
-| **Transient** (timeout, rate limit) | "timeout", "503", "no response" | Wait 5s, retry once. If fails: escalate to user. | 2 |
+| **Transient** (timeout, rate limit) | "timeout", "503", "no response" | Wait 5s, retry. If fails: wait 30s, retry. After 2 attempts: escalate to user. | 2 |
 | **Permission** (403, 401, denied) | "403", "401", "denied", "unauthorized" | Emit `PERMISSION_REQUIRED` event. Ask user for credentials/approval. Retry once. | 1 + user input |
 | **Invalid Input** (malformed, missing) | "missing field", "invalid format" | Ask user to provide/correct. Retry once. | 1 + user input |
-| **Unrecoverable** (resource deleted, impossible) | "not found", "impossible", "no longer valid" | Escalate: "Skip task or abort plan?" Wait for user decision. | 0 retries |
+| **Logic Error** (wrong approach, bug) | "wrong type", "assertion failed", code returns unexpected result | Fix the approach. Retry once. | 1 |
+| **Unrecoverable** (resource deleted, impossible) | "not found", "impossible", "no longer valid" | Ask user: "Skip this task or abort plan?" Respect decision. | 0 retries |
 
 After recovery, resume from where you left off or ask user for next steps.
 
-### 5. LOG — Report outcomes
+### 5. LOG — Emit timestamped events
 
-List all completed tasks, failures, and how they were recovered.
+Record every state change with timestamp and event type. Example format:
+
+```
+[14:23:00Z] PLAN_CREATED { task_count: 4 }
+[14:23:05Z] GATE_APPROVED
+[14:23:10Z] TASK_STARTED { task: 1 }
+[14:23:45Z] TASK_COMPLETED { task: 1 }
+[14:24:00Z] EXECUTION_COMPLETE { completed: 4, failed: 0, skipped: 0 }
+```
 
 ---
 
