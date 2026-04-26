@@ -90,17 +90,30 @@ Gate: [APPROVED immediately]
 4. Don't skip tasks unless approved
 5. Don't add new tasks without asking
 
-**Progress Report Format:**
+**Progress Report Format** (MANDATORY):
+
+Use `[Task N/M]` format for EVERY task completion, failure, and retry:
 
 ```
-[Task N/M] ✓ Task name completed
-  Additional details if relevant
+[Task 1/5] ✓ Task name: brief result
+[Task 2/5] ✗ Task name: error reason
+[Task 2/5 RETRY] ✓ Task name: retry outcome
 ```
 
-**Stopping on Error:**
+Example:
+```
+[Task 1/5] ✓ Analyze requirements: 5 key features identified
+[Task 2/5] ✗ Design schema: Database connection timeout
+[Task 2/5 RETRY] ✓ Design schema: Connection restored, schema designed
+[Task 3/5] ✓ Implement models: 3 models created
+```
+
+**Every task must be reported in [Task N/M] format — this is the execution log.**
+
+**On Error — Ask for Approval:**
 
 ```
-[Task 2/5] ✗ Task failed: reason here
+[Task 3/5] ✗ API integration: 403 Forbidden
 
 What now?
 - Retry this task?

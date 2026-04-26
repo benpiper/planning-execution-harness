@@ -27,12 +27,24 @@ Show the task list. Mark any irreversible or destructive steps as ⚠ RISKY. Wai
 
 Do not execute until explicitly approved.
 
-### 3. EXECUTE — Follow the plan
+### 3. EXECUTE — Follow the plan with explicit progress reporting
 
-Execute tasks in order:
-- Complete each task as planned
-- Report progress: "[Task N/M] ✓ completed"
-- Stop on errors, don't skip ahead
+Execute tasks in order. **For each task, use this exact format:**
+
+**On success:** `[Task N/M] ✓ [task name]: [brief result]`  
+**On failure:** `[Task N/M] ✗ [task name]: [error reason]`  
+**On retry:** `[Task N/M RETRY] ✓ [task name]: [retry outcome]`
+
+Example:
+```
+[Task 1/4] ✓ Check request limits: 100MB limit, request is 50MB
+[Task 2/4] ✗ Query optimization: N+1 bug detected (45s query)
+[Task 2/4 RETRY] ✓ Query optimization: Fixed with joins, now 2s
+```
+
+Rules:
+- Use `[Task N/M]` format for EVERY task start and completion
+- Stop on errors — don't continue to next task without recovery
 
 ### 4. RECOVER — Classify and fix failures
 
@@ -62,29 +74,33 @@ Record every state change with timestamp and event type. Example format:
 
 ---
 
-## Quick Example
+## Quick Example: Full Flow
 
 **Goal:** "Debug why my login is returning 401 errors"
 
-**Plan:**
+**Plan (presented for approval):**
 ```
-Task 1: Run: curl -X POST http://localhost:3000/api/token -d '{"user":"test"}'
-Task 2: Check logs: grep "Authorization header" app.log
-Task 3: Run: node -e "console.log(jwt.verify(token, process.env.SECRET))"
-Task 4: Query: SELECT * FROM users WHERE id=123
-```
-
-**After approval, execute:**
-```
-[Task 1/4] ✓ Tokens generating successfully
-[Task 2/4] ✓ Authorization header present in all requests
-[Task 3/4] ✗ jwt.verify failed: "Invalid signature"
-  Recovery: Check SIGNING_KEY env var → wrong value detected
-  [Task 3/4 RETRY] ✓ Validation now passing (env var corrected)
-[Task 4/4] ✓ User lookup successful
+Task 1: Test token generation: curl -X POST http://localhost:3000/api/token
+Task 2: Verify Authorization header: grep Authorization app.log
+Task 3: Check JWT validation: node -e "jwt.verify(token, process.env.SECRET)"
+Task 4: Verify user lookup: SELECT * FROM users WHERE id=123
 ```
 
-**Outcome:** Found: SIGNING_KEY env var was outdated. User configured correct key in environment, retry succeeded.
+**User approval:** ✓ Approved
+
+**Execution (with [Task N/M] format):**
+```
+[Task 1/4] ✓ Test token generation: HTTP 200, tokens created
+[Task 2/4] ✓ Verify Authorization header: Present in 100% of requests
+[Task 3/4] ✗ Check JWT validation: Invalid signature error
+  → Recovery: Transient or logic error? Check SIGNING_KEY env var
+  → Found: SIGNING_KEY mismatch detected
+  → Recovery action: Configure correct key in environment
+[Task 3/4 RETRY] ✓ Check JWT validation: Signature valid (env corrected)
+[Task 4/4] ✓ Verify user lookup: 1 user found (id=123)
+```
+
+**Execution complete:** 4/4 tasks passed. Root cause: SIGNING_KEY env var was outdated.
 
 ---
 
