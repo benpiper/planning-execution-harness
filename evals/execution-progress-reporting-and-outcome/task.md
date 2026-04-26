@@ -28,8 +28,8 @@ The following files are provided as inputs. Extract them before beginning.
 import sqlite3
 import hashlib
 
-SECRET_KEY = "super_secret_key_12345"
-DB_PASSWORD = "prod_db_pass_xyz"
+SECRET_KEY = "[HARDCODED_SECRET_IN_CODE]"
+DB_PASSWORD = "[HARDCODED_PASSWORD_IN_CODE]"
 
 def authenticate_user(username, password):
     conn = sqlite3.connect("users.db")
