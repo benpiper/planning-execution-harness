@@ -1,8 +1,8 @@
 {
   "name": "benpiper-workspace/planning-execution-harness",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": false,
-  "summary": "Break down goals into multiple tasks and coordinate execution with gates and recovery",
+  "summary": "Break down goals into multiple tasks and coordinate execution with gates and recovery. Based on Claw Code's agentic harness.",
   "skills": {
     "planning-execution-harness": {
       "path": "SKILL.md"
