@@ -1,7 +1,5 @@
 # Planning-Execution Harness
 
-**Tessl Skill**: [`benpiper-workspace/planning-execution-harness`](https://tessl.io/registry/skills/github/benpiper/planning-execution-harness)
-
 A foundational pattern for breaking down any goal into multiple coordinated tasks with explicit planning, execution, gating, and recovery.
 
 **Triggered when you need to:**
