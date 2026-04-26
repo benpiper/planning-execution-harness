@@ -1,6 +1,6 @@
 ---
 name: planning-execution-harness
-description: "Use when you need to break down a goal into multiple ordered tasks with dependencies, add approval gates before execution, and implement automatic recovery for failures. Applies to: workflow automation, multi-step processes, task orchestration, approval-gated execution, failure recovery."
+description: "Use when orchestrating multi-step processes that require explicit approval before execution and intelligent failure recovery. Creates ordered task dependencies and execution DAGs. Enforces approval gates that block execution until approved. Classifies failures (transient/permission/unrecoverable) and applies type-specific recovery strategies. Applies to: runtime task orchestration, approval-gated workflows, multi-step execution with dependencies, failure classification and recovery, complex deployment pipelines."
 ---
 
 # Planning-Execution Pattern for LLMs
@@ -42,16 +42,16 @@ Execute tasks in order:
 
 ### 4. RECOVER — Classify and fix failures
 
-When a task fails:
+When a task fails, classify it first, then apply appropriate recovery:
 
-| Failure Type | Recovery |
-|---|---|
-| Transient (timeout, network) | Retry once, then escalate |
-| Permission (access denied) | Ask user for help |
-| Invalid input | Refine and retry |
-| Unrecoverable | Skip or escalate |
+| Failure Type | Detection | Recovery | Max Attempts |
+|---|---|---|---|
+| **Transient** (timeout, rate limit) | "timeout", "503", "no response" | Wait 5s, retry once. If fails: escalate to user. | 2 |
+| **Permission** (403, 401, denied) | "403", "401", "denied", "unauthorized" | Emit `PERMISSION_REQUIRED` event. Ask user for credentials/approval. Retry once. | 1 + user input |
+| **Invalid Input** (malformed, missing) | "missing field", "invalid format" | Ask user to provide/correct. Retry once. | 1 + user input |
+| **Unrecoverable** (resource deleted, impossible) | "not found", "impossible", "no longer valid" | Escalate: "Skip task or abort plan?" Wait for user decision. | 0 retries |
 
-After recovery, resume from where you left off.
+After recovery, resume from where you left off or ask user for next steps.
 
 ### 5. LOG — Report outcomes
 
