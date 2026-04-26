@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent applies the planning-execution harness by decomposing the release pipeline into correctly sized, ordered, dependency-explicit tasks; flags risky operations at the gate; and produces a structured event log with required state-change entries.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Task count in range",
+      "max_score": 10,
+      "description": "The release_plan.md lists between 3 and 7 tasks (inclusive) — not a single monolithic step and not more than 7"
+    },
+    {
+      "name": "Dependency notation used",
+      "max_score": 10,
+      "description": "At least one task in release_plan.md explicitly references a dependency on another task (e.g. 'depends on Task N' or equivalent notation in text)"
+    },
+    {
+      "name": "Tasks are concrete and testable",
+      "max_score": 10,
+      "description": "Each task in the plan specifies a concrete action (not vague phrases like 'improve' or 'fix') with a clear pass/fail outcome or acceptance criterion"
+    },
+    {
+      "name": "Risky step flagged",
+      "max_score": 10,
+      "description": "The production deployment step (or equivalent irreversible/destructive action) is explicitly flagged as risky, dangerous, or requiring extra confirmation in release_plan.md"
+    },
+    {
+      "name": "Gate approval present",
+      "max_score": 10,
+      "description": "execution_log.txt contains a GATE_APPROVED (or equivalent) event entry, indicating the plan was presented and approved before execution began"
+    },
+    {
+      "name": "Log has timestamps",
+      "max_score": 8,
+      "description": "Every event entry in execution_log.txt includes a timestamp (any date/time format is acceptable)"
+    },
+    {
+      "name": "Log has event type labels",
+      "max_score": 8,
+      "description": "Each entry in execution_log.txt includes an event type label (e.g. PLAN_CREATED, TASK_STARTED, TASK_COMPLETED) — not just free-form prose"
+    },
+    {
+      "name": "PLAN_CREATED event logged",
+      "max_score": 6,
+      "description": "execution_log.txt contains a PLAN_CREATED (or equivalent) event entry near the start of the log"
+    },
+    {
+      "name": "Progress format per task",
+      "max_score": 10,
+      "description": "execution_log.txt uses a '[Task N/M]' style progress marker (or clearly equivalent format) for each task completion, showing task index out of total"
+    },
+    {
+      "name": "Execution complete event",
+      "max_score": 8,
+      "description": "execution_log.txt ends with an EXECUTION_COMPLETE (or equivalent) event and a final outcome summary listing which tasks completed"
+    },
+    {
+      "name": "Tasks in ordered sequence",
+      "max_score": 10,
+      "description": "The tasks in execution_log.txt are logged in the same order they appear in release_plan.md — there is no reordering or skipping mid-execution"
+    }
+  ]
+}

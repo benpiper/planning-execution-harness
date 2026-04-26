@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements failure classification and targeted recovery recipes from the planning-execution harness, including appropriate retry limits, PERMISSION_REQUIRED escalation, unrecoverable escalation, and checkpoint-based resumption.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Transient category present",
+      "max_score": 8,
+      "description": "pipeline.py or failure_scenarios.md identifies a 'transient' (or equivalent: timeout, network, rate limit) failure category with its own handling branch"
+    },
+    {
+      "name": "Permission category present",
+      "max_score": 8,
+      "description": "pipeline.py or failure_scenarios.md identifies a 'permission' (or equivalent: 401, 403, access denied, unauthorized) failure category with its own handling branch"
+    },
+    {
+      "name": "Invalid input category present",
+      "max_score": 8,
+      "description": "pipeline.py or failure_scenarios.md identifies an 'invalid input' (or equivalent: malformed data, missing field, bad format) failure category with its own handling branch"
+    },
+    {
+      "name": "Unrecoverable category present",
+      "max_score": 8,
+      "description": "pipeline.py or failure_scenarios.md identifies an 'unrecoverable' (or equivalent: resource gone, endpoint no longer exists, impossible) failure category with its own handling branch"
+    },
+    {
+      "name": "Transient retry limit",
+      "max_score": 10,
+      "description": "The transient failure handling in pipeline.py limits retries to a maximum of 2 attempts (not infinite retry, not just 1 attempt with no retry)"
+    },
+    {
+      "name": "Permission escalation signal",
+      "max_score": 10,
+      "description": "The permission failure branch in pipeline.py emits a distinct escalation signal (e.g. PERMISSION_REQUIRED message, raises a specific exception, or logs/prints a permission-specific alert) rather than silently retrying or failing"
+    },
+    {
+      "name": "Unrecoverable escalation",
+      "max_score": 10,
+      "description": "The unrecoverable failure branch in pipeline.py raises an error, asks the caller for a decision (skip or abort), or explicitly escalates rather than retrying"
+    },
+    {
+      "name": "Checkpoint / no-re-run of completed stages",
+      "max_score": 12,
+      "description": "pipeline.py tracks which stages have completed so that a retry after failure restarts from the failed stage, not from the beginning (checkpoint dict, completed-stages set, or equivalent mechanism present in code)"
+    },
+    {
+      "name": "Recovery resumes from failed task",
+      "max_score": 8,
+      "description": "failure_scenarios.md (or code comments) explicitly states that recovery resumes from the failed stage rather than repeating the whole pipeline"
+    },
+    {
+      "name": "At least four failure categories in docs",
+      "max_score": 8,
+      "description": "failure_scenarios.md lists at least 4 distinct failure categories each with detection method, recovery action, and max retry count columns/fields"
+    },
+    {
+      "name": "Transient wait before retry",
+      "max_score": 10,
+      "description": "The transient failure handling includes a delay or wait before retrying (e.g. sleep, time.sleep, or documented wait in failure_scenarios.md)"
+    }
+  ]
+}

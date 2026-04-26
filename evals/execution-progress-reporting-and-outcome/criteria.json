@@ -1,0 +1,71 @@
+{
+  "context": "Tests whether the agent applies the planning-execution harness's progress reporting format, structured event log requirements, stop-on-error behavior, and final outcomes reporting when carrying out a multi-step audit task.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Plan lists tasks separately",
+      "max_score": 7,
+      "description": "audit_plan.md enumerates each input file as a separate numbered task — not a single 'audit all files' step"
+    },
+    {
+      "name": "Plan flags review required",
+      "max_score": 8,
+      "description": "audit_plan.md explicitly states the plan requires review/approval before execution begins (not just 'here is the plan')"
+    },
+    {
+      "name": "GATE_APPROVED event logged",
+      "max_score": 8,
+      "description": "execution_log.txt contains a GATE_APPROVED (or equivalent approval) event entry before any TASK_STARTED entries"
+    },
+    {
+      "name": "PLAN_CREATED event logged",
+      "max_score": 6,
+      "description": "execution_log.txt contains a PLAN_CREATED (or equivalent) event near the start of the log"
+    },
+    {
+      "name": "Progress format [Task N/M]",
+      "max_score": 10,
+      "description": "execution_log.txt uses '[Task N/M] ✓' or '[Task N/M] ✗' style progress markers (or clearly equivalent N-of-M notation) for each task"
+    },
+    {
+      "name": "Timestamps in every log entry",
+      "max_score": 8,
+      "description": "Every event entry in execution_log.txt includes a timestamp — no entries have only an event type and details with no time"
+    },
+    {
+      "name": "Event type labels present",
+      "max_score": 8,
+      "description": "execution_log.txt uses structured event type labels (e.g. TASK_STARTED, TASK_COMPLETED, RECOVERY_ATTEMPTED) on each entry, not just free prose"
+    },
+    {
+      "name": "TASK_STARTED and TASK_COMPLETED logged per task",
+      "max_score": 8,
+      "description": "execution_log.txt contains both a TASK_STARTED and a TASK_COMPLETED (or TASK_FAILED) entry for each audit task — not just completion entries"
+    },
+    {
+      "name": "EXECUTION_COMPLETE event logged",
+      "max_score": 7,
+      "description": "execution_log.txt ends with an EXECUTION_COMPLETE (or equivalent) event entry"
+    },
+    {
+      "name": "Failure classified in log",
+      "max_score": 8,
+      "description": "If any TASK_FAILED event appears in execution_log.txt, it includes a failure classification label (transient, permission, invalid input, unrecoverable, or equivalent) — not just a generic error message"
+    },
+    {
+      "name": "Outcome report matches log",
+      "max_score": 8,
+      "description": "outcome_report.md lists the same set of completed and failed tasks as appear in execution_log.txt — no tasks appear in one but not the other"
+    },
+    {
+      "name": "Tasks executed in plan order",
+      "max_score": 8,
+      "description": "The TASK_STARTED entries in execution_log.txt follow the same sequence as the tasks in audit_plan.md — tasks are not reordered mid-execution"
+    },
+    {
+      "name": "No mid-execution task additions without log note",
+      "max_score": 6,
+      "description": "Any task that appears in execution_log.txt but was NOT in the original audit_plan.md has a corresponding log entry noting it was added (or all log tasks match the plan exactly)"
+    }
+  ]
+}
