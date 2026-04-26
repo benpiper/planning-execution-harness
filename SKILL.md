@@ -41,7 +41,7 @@ When a task fails, classify it first, then apply appropriate recovery:
 | Failure Type | Detection | Recovery | Max Attempts |
 |---|---|---|---|
 | **Transient** (timeout, rate limit) | "timeout", "503", "no response" | Wait 5s, retry. If fails: wait 30s, retry. After 2 attempts: escalate to user. | 2 |
-| **Permission** (403, 401, denied) | "403", "401", "denied", "unauthorized" | Emit `PERMISSION_REQUIRED` event. Ask user for credentials/approval securely (don't log them). Retry once. | 1 + user input |
+| **Permission** (403, 401, denied) | "403", "401", "denied", "unauthorized" | Emit `PERMISSION_REQUIRED` event. STOP. Tell user to set credentials via env vars/config (never as text input). Retry once after configured. | 1 + user action |
 | **Invalid Input** (malformed, missing) | "missing field", "invalid format" | Ask user to provide/correct. Retry once. | 1 + user input |
 | **Logic Error** (wrong approach, bug) | "wrong type", "assertion failed", code returns unexpected result | Fix the approach. Retry once. | 1 |
 | **Unrecoverable** (resource deleted, impossible) | "not found", "impossible", "no longer valid" | Ask user: "Skip this task or abort plan?" Respect decision. | 0 retries |
@@ -76,15 +76,15 @@ Task 4: Query: SELECT * FROM users WHERE id=123
 
 **After approval, execute:**
 ```
-[Task 1/4] ✓ Tokens generating: {"token":"eyJhb..."}
-[Task 2/4] ✓ Header present in 100% of requests
+[Task 1/4] ✓ Tokens generating successfully
+[Task 2/4] ✓ Authorization header present in all requests
 [Task 3/4] ✗ jwt.verify failed: "Invalid signature"
   Recovery: Check SIGNING_KEY env var → wrong value detected
-  [Task 3/4 RETRY] ✓ Validation now passing with correct key
-[Task 4/4] ✓ User lookup: {id:123, name:"Alice"}
+  [Task 3/4 RETRY] ✓ Validation now passing (env var corrected)
+[Task 4/4] ✓ User lookup successful
 ```
 
-**Outcome:** Found: SIGNING_KEY env var was outdated. Updated and tested.
+**Outcome:** Found: SIGNING_KEY env var was outdated. User configured correct key in environment, retry succeeded.
 
 ---
 

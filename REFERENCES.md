@@ -153,10 +153,13 @@ Recovery:
 ```
 Detection: "403 Forbidden" or "Access Denied"
 Recovery:
-  1. Escalate to user: "Need permission/credentials to proceed. Provide them?" (do not log credentials)
-  2. If provided, retry with new credentials securely (do not expose in logs)
-  3. If not provided, skip or abort task
-NOTE: Handle credentials securely—never log or echo them in output or event logs.
+  1. Emit PERMISSION_REQUIRED event
+  2. STOP execution. Do NOT ask for credentials as text input.
+  3. Instruct user to set credentials via secure channels (environment variables, 
+     config files, vaults) BEFORE resuming
+  4. Ask: "Credentials configured? Retry, or skip/abort?"
+SECURITY NOTE: Credentials must come from secure sources (env vars, vaults, 
+config files), never as text input during execution. Never log or expose them.
 ```
 
 **Recipe: Invalid Input**

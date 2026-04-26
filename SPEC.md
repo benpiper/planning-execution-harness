@@ -269,13 +269,16 @@ Escalation: Ask user: "Network unstable. Retry, skip, or abort?"
 Failure Type: Permission
 Detection: "403 Forbidden" or "401 Unauthorized"
 Recovery Steps:
-  1. Emit PERMISSION_REQUIRED event (do not include credentials in log)
-  2. Ask user for credentials securely (outside the logged output/context)
-  3. If user provides credentials, retry with them (do not log credentials)
-  4. If not provided, ask: "Skip task or abort plan?"
-Max Attempts: 1 (after user provides credentials)
+  1. Emit PERMISSION_REQUIRED event
+  2. STOP execution. Do NOT ask user to provide credentials during execution.
+  3. Instruct user to set credentials via secure channels (environment variables, 
+     config files, credential vaults) BEFORE execution resumes
+  4. Ask: "Credentials configured? Retry, or skip/abort task?"
+Max Attempts: 1 (after user configures credentials via secure means)
 Escalation: User decides (skip or abort)
-NOTE: Never log, echo, or expose credentials in event logs or output.
+SECURITY NOTE: Never request, log, or handle credentials as text input during 
+execution. Credentials must come from secure sources (env vars, vaults, config 
+files) that are not exposed in logs or output.
 ```
 
 **Failure Modes**:
@@ -405,6 +408,36 @@ External systems can:
 - **Approval mechanisms**: Human, policy rules, hybrid
 - **Storage**: File, database, event stream
 - **Recovery recipes**: Domain-specific recovery strategies
+
+---
+
+## Security Considerations
+
+### Credential Handling
+
+This pattern is designed for task orchestration but has implications for credential management:
+
+**✓ Safe Use Cases:**
+- Automation tasks that don't involve secrets (file operations, data transformation, public API calls with pre-configured auth)
+- Tasks where credentials are already stored in secure vaults/env vars (agent retrieves, doesn't receive as input)
+- Non-sensitive operations that are logged
+
+**⚠ Caution Required:**
+- Tasks requiring permission recovery (3FA, API keys, passwords)
+- Sensitive environments where execution logs are exposed
+- Scenarios where agents might echo credential values in output
+
+**✗ Not Recommended:**
+- Interactive credential entry during agent execution (use env vars/vaults instead)
+- Workflows where agent output might be logged or exposed (logs expose credentials)
+- High-security operations where any credential exposure is unacceptable
+
+### Best Practice: Credential Security
+- Never ask agents to request credentials as text input during execution
+- Require credentials to be pre-configured in secure sources (environment variables, credential vaults, config files)
+- When a permission error occurs, stop execution and require the user to configure credentials via secure means
+- Never log, echo, or display credential values in event logs or output
+- Design tasks to use pre-authenticated clients (credentials injected before task execution starts)
 
 ---
 
