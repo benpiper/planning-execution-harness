@@ -196,23 +196,26 @@ Task 4: Integration (depends on Task 2, Task 3)
 
 **Progress Format** (MANDATORY for every task):
 
-Use this exact format for EVERY task—success, failure, and retry:
+Use clear notation showing N/M progress with completion symbols. Format is flexible; choose what fits your task:
 
-```
-[Task N/M] ✓ Task name: brief result
-[Task N/M] ✗ Task name: error reason  
-[Task N/M RETRY] ✓ Task name: retry outcome
-```
+**Required elements:**
+1. **Task sequence:** Step N/M, Task N/M, Item N/M, etc.
+2. **Completion symbol:** ✓/✗, COMPLETED/FAILED, (done)/(error), etc.
 
-Examples:
+**Acceptable formats:**
 ```
 [Task 1/5] ✓ Check database: Performance acceptable (2s query)
-[Task 2/5] ✗ Check API limits: Rate limit error (429 response)
-[Task 2/5 RETRY] ✓ Check API limits: Limit confirmed, 1000 req/hour
-[Task 3/5] ✓ Update config: Deployment settings validated
+Step 2/5: Check API limits (✗ failed: 429 Rate limit)
+Step 2/5 - Retry: Check API limits (✓ completed: 1000 req/hour)
+Item 3/5 [COMPLETED] Update config: Deployment settings validated
 ```
 
-**Critical requirement**: Every task MUST be reported with `[Task N/M]` format. No task is complete until it appears in this format.
+All formats above are valid because they show:
+- Progress: N/M (1/5, 2/5, etc.)
+- Completion: ✓, ✗, COMPLETED, FAILED, etc.
+- Details: what was done and result
+
+**Critical requirement**: Every task MUST show clear N/M progress + completion symbol. Choose any format that includes both elements.
 
 **Failure Modes**:
 - Missing dependency (Task 2 before Task 1) → Detect, block, emit error

@@ -92,23 +92,28 @@ Gate: [APPROVED immediately]
 
 **Progress Report Format** (MANDATORY):
 
-Use `[Task N/M]` format for EVERY task completion, failure, and retry:
+Use CLEAR NOTATION with N/M progress and completion symbols. Format is flexible:
 
-```
-[Task 1/5] ✓ Task name: brief result
-[Task 2/5] ✗ Task name: error reason
-[Task 2/5 RETRY] ✓ Task name: retry outcome
-```
-
-Example:
+**All these formats are acceptable:**
 ```
 [Task 1/5] ✓ Analyze requirements: 5 key features identified
-[Task 2/5] ✗ Design schema: Database connection timeout
-[Task 2/5 RETRY] ✓ Design schema: Connection restored, schema designed
-[Task 3/5] ✓ Implement models: 3 models created
+Step 2/5: Design schema (✗ failed: timeout)
+Step 2/5 - Retry: Design schema (✓ succeeded)
+Item 3/5 [COMPLETED] Implement models: 3 models created
 ```
 
-**Every task must be reported in [Task N/M] format — this is the execution log.**
+**Key requirements:**
+- Show N/M progress (1/5, 2/5, etc.)
+- Show completion symbol (✓/✗, COMPLETED/FAILED, etc.)
+- Include task name and brief result/reason
+
+**Why flexible formats matter:**
+- "Step" feels natural for sequential audits
+- "Task" fits structured planning
+- "Item" works for inventory-style work
+- Any format is fine as long as it includes progress + notation
+
+**This is the execution log — every task must appear with clear N/M progress and completion symbol.**
 
 **On Error — Ask for Approval:**
 

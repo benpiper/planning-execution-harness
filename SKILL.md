@@ -27,24 +27,39 @@ Show the task list. Mark any irreversible or destructive steps as ⚠ RISKY. Wai
 
 Do not execute until explicitly approved.
 
-### 3. EXECUTE — Follow the plan with explicit progress reporting
+### 3. EXECUTE — Follow the plan with clear progress notation
 
-Execute tasks in order. **For each task, use this exact format:**
+Execute tasks in order. **For each task, use CLEAR NOTATION showing N/M progress:**
 
-**On success:** `[Task N/M] ✓ [task name]: [brief result]`  
-**On failure:** `[Task N/M] ✗ [task name]: [error reason]`  
-**On retry:** `[Task N/M RETRY] ✓ [task name]: [retry outcome]`
+**Acceptable formats:**
+- `[Task N/M] ✓ Task name: result`
+- `Step N/M: Task name (✓ completed)`
+- `N/M - Task name [COMPLETED]`
+- Any format that includes: **number/total + completion symbol**
 
-Example:
+**On success:** Include ✓ or COMPLETED or similar  
+**On failure:** Include ✗ or FAILED or similar  
+**On retry:** Show recovery action and retry outcome
+
+Examples (all acceptable):
 ```
-[Task 1/4] ✓ Check request limits: 100MB limit, request is 50MB
-[Task 2/4] ✗ Query optimization: N+1 bug detected (45s query)
-[Task 2/4 RETRY] ✓ Query optimization: Fixed with joins, now 2s
+Step 1/4: Check request limits (✓ completed)
+Step 2/4: Query optimization (✗ failed: N+1 bug)
+Step 2/4 - Retry: Query optimization (✓ completed)
+```
+
+OR:
+
+```
+[Task 1/4] ✓ Check request limits: 100MB, request 50MB
+[Task 2/4] ✗ Query optimization: N+1 detected
+[Task 2/4 RETRY] ✓ Query optimization: Fixed, now 2s
 ```
 
 Rules:
-- Use `[Task N/M]` format for EVERY task start and completion
-- Stop on errors — don't continue to next task without recovery
+- **Show N/M progress for every task** (Step 1/4, Task 2/5, etc.)
+- **Include completion notation** (✓/✗, COMPLETED/FAILED, etc.)
+- Stop on errors — don't continue without recovery
 
 ### 4. RECOVER — Classify and fix failures
 
@@ -88,19 +103,29 @@ Task 4: Verify user lookup: SELECT * FROM users WHERE id=123
 
 **User approval:** ✓ Approved
 
-**Execution (with [Task N/M] format):**
+**Execution (using flexible progress notation):**
 ```
-[Task 1/4] ✓ Test token generation: HTTP 200, tokens created
-[Task 2/4] ✓ Verify Authorization header: Present in 100% of requests
-[Task 3/4] ✗ Check JWT validation: Invalid signature error
-  → Recovery: Transient or logic error? Check SIGNING_KEY env var
-  → Found: SIGNING_KEY mismatch detected
-  → Recovery action: Configure correct key in environment
-[Task 3/4 RETRY] ✓ Check JWT validation: Signature valid (env corrected)
-[Task 4/4] ✓ Verify user lookup: 1 user found (id=123)
+Step 1/4: Test token generation (✓ passed)
+  Result: HTTP 200, tokens created
+
+Step 2/4: Verify Authorization header (✓ passed)
+  Result: Present in 100% of requests
+
+Step 3/4: Check JWT validation (✗ failed)
+  Error: Invalid signature error
+  Recovery: Check SIGNING_KEY env var → found mismatch
+  Action: Configure correct key in environment
+
+Step 3/4 Retry: Check JWT validation (✓ passed)
+  Result: Signature valid with corrected env var
+
+Step 4/4: Verify user lookup (✓ passed)
+  Result: 1 user found (id=123)
 ```
 
 **Execution complete:** 4/4 tasks passed. Root cause: SIGNING_KEY env var was outdated.
+
+*Note: This example uses "Step N/M" format. You could also use [Task N/M], Item N/M, or similar—any format that shows clear progress notation (N/M + ✓/✗).*
 
 ---
 
