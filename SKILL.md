@@ -1,11 +1,11 @@
 ---
 name: planning-execution-harness
-description: "Use when orchestrating multi-step processes that require explicit approval before execution and intelligent failure recovery. Creates ordered task dependencies and execution DAGs. Enforces approval gates that block execution until approved. Classifies failures (transient/permission/unrecoverable) and applies type-specific recovery strategies. Applies to: runtime task orchestration, approval-gated workflows, multi-step execution with dependencies, failure classification and recovery, complex deployment pipelines."
+description: "Use when orchestrating multi-step processes that require explicit approval before proceeding and retry on failure. Teaches step-by-step planning before action, workflow automation with approval gates, and failure recovery strategies. Creates task dependencies and execution plans. Enforces approval checkpoints that block execution. Retries on transient failures, escalates on permission errors, handles unrecoverable failures gracefully. Applies to: approval-gated workflows, step-by-step pipelines, complex multi-task processes, failure recovery, deployment pipelines, task orchestration."
 ---
 
 # Planning-Execution Pattern for LLMs
 
-Teach any LLM to separate planning from execution through explicit stages: **decompose → approve → execute → recover**.
+Orchestrate multi-step processes by separating planning from execution: **decompose → approve → execute → recover**.
 
 ## The Pattern
 
@@ -82,19 +82,6 @@ Task 4: Check if user lookup succeeds
 ```
 
 **Outcome:** Found bug in signing key. Fixed.
-
----
-
-## Use When
-
-✅ Multiple steps required (3+)  
-✅ Steps depend on each other  
-✅ Approval needed before action  
-✅ Failures need different recovery strategies  
-
-❌ Single action (call one API)  
-❌ No dependencies  
-❌ No approval needed  
 
 ---
 
