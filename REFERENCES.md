@@ -153,9 +153,10 @@ Recovery:
 ```
 Detection: "403 Forbidden" or "Access Denied"
 Recovery:
-  1. Escalate to user: "Need permission/credentials to proceed. Provide them?"
-  2. If provided, retry with new credentials
+  1. Escalate to user: "Need permission/credentials to proceed. Provide them?" (do not log credentials)
+  2. If provided, retry with new credentials securely (do not expose in logs)
   3. If not provided, skip or abort task
+NOTE: Handle credentials securely—never log or echo them in output or event logs.
 ```
 
 **Recipe: Invalid Input**

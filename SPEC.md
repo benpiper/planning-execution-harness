@@ -269,12 +269,13 @@ Escalation: Ask user: "Network unstable. Retry, skip, or abort?"
 Failure Type: Permission
 Detection: "403 Forbidden" or "401 Unauthorized"
 Recovery Steps:
-  1. Emit PERMISSION_REQUIRED event
-  2. Ask user: "Need API key / confirmation to proceed. Provide?"
-  3. If provided, retry with new credentials
+  1. Emit PERMISSION_REQUIRED event (do not include credentials in log)
+  2. Ask user for credentials securely (outside the logged output/context)
+  3. If user provides credentials, retry with them (do not log credentials)
   4. If not provided, ask: "Skip task or abort plan?"
 Max Attempts: 1 (after user provides credentials)
 Escalation: User decides (skip or abort)
+NOTE: Never log, echo, or expose credentials in event logs or output.
 ```
 
 **Failure Modes**:
